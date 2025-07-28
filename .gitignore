@@ -1,2 +1,5 @@
 # 무시
 .vscode
+.pyc
+.xlsx
+.__pycache__

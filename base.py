@@ -30,6 +30,19 @@ class Parents:
 
         self.driver = webdriver.Chrome(options=chrome_options)
         self.wait = WebDriverWait(self.driver, 20)
+    
+    def set_user_agent(self, chrome_options, user_agent=None):
+        """
+        크롬 옵션에 user-agent를 추가하는 메서드.
+        user_agent를 지정하지 않으면 기본 최신 크롬 UA 사용.
+        """
+        if user_agent is None:
+            user_agent = (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/125.0.0.0 Safari/537.36"
+            )
+        chrome_options.add_argument(f"--user-agent={user_agent}")
 
     # 접속할거임
     def Visit_Link(self, url):
@@ -41,12 +54,7 @@ class Parents:
     
 
     # 대충 저장경로 이리이리하겠다.
-    def get_save_path(self, carrier_name, vessel_name, ext="xlsx"):
-        """
-        저장 경로 생성 (예: scheduleData/250714/)
-        """
-        # 파일명에 들어가면 안 되는 문자 제거
-        safe_vessel = vessel_name.replace("/", "_").replace("\\", "_")
-        safe_carrier = carrier_name.replace("/", "_").replace("\\", "_")
-        filename = f"{safe_carrier}_{safe_vessel}.{ext}"
-        return os.path.join(self.today_download_dir, filename)
+    def get_save_path(self, ext="xlsx"):
+        today_str = datetime.now().strftime("%y%m%d")
+        filename = f"SCFI_{today_str}.{ext}"
+        return os.path.join(self.base_download_dir, filename)
