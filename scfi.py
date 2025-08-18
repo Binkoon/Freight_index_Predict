@@ -11,7 +11,14 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-def SCFI_Crawling():
+########### 여긴 주간 #############
+# 매주 금요일 기준으로 긁어오기. 
+# -> 다만, 금요일로 긁어올 경우 오전에는 아직 좀 비어있는 값들이 있어서 오후에 세팅하거나 토요일날 긁어와야 할 듯
+def Week_SCFI_Crawling():
+    pass
+
+############# 여긴 데일리 ############
+def Daily_SCFI_Crawling():
     ## 0. 사전 세팅
     # 화면을 띄울 때, 해상도는 Full로 해놓고 크롬을 사용할 것임.
     # user-agent 세팅 해놓을거임
@@ -43,52 +50,91 @@ def SCFI_Crawling():
 
         # 좀 더 쉬운 방법은  td의 클래스명인데  오늘을 뜻하는 td 클래스명은 class="current is-selected is-today" 이므로 이거의 바로 1줄 위에 있는 td 클래스를 선택하면 될듯하다.
         
-        # 어제날짜 긁어와
-        yesterday = datetime.now() - timedelta(days=1)
-        yesterday_day = str(yesterday.day).zfill(2)  # 01, 02 형태로 만들어야함. 그냥 1,2 해놓을것이지 쓸데없이 01 02 이런식으로 써재낌.
+        # 어제날짜부터 시작해서 데이터가 있는 날짜를 찾을 때까지 하루씩 뒤로 가기
+        # -> 다만, 평일에만 데이터가 업데이트되고 주말이나 공휴일에는 데이터가 없어서 에러가 발생함
+        # -> "No data available" 메시지를 체크해서 데이터가 없으면 하루씩 뒤로 가면서 데이터가 있는 날짜를 찾음
+        current_date = datetime.now()
+        days_back = 1  # 어제부터 시작
+        max_days_back = 30  # 최대 30일까지 뒤로 가기 (안전장치)
         
-        # 오늘 날짜 td부터 찾기
-        try:
-            today_td = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "td.current.is-selected.is-today")))
-            print(f"오늘 날짜 td 찾음. 이거 기준으로 어제 날짜 찾으셈.")
-            
-            # 캘린더에서 어제 날짜 찾기
-            calendar_tbody = driver.find_element(By.XPATH, '//*[@id="home_calendar_cont"]/div[2]/table/tbody')
-            
-            # tr[1]부터 tr[6]까지 순회하면서 어제 날짜 찾기
-            date_found = False
-            for tr_num in range(1, 7):
-                tr_xpath = f'//*[@id="home_calendar_cont"]/div[2]/table/tbody/tr[{tr_num}]'
-                tr_element = driver.find_element(By.XPATH, tr_xpath)
+        print("데이터가 있는 날짜를 찾는 중...")
+        
+        while days_back <= max_days_back:
+            try:
+                # 현재 날짜에서 days_back만큼 뒤로 간 날짜 계산
+                target_date = current_date - timedelta(days=days_back)
+                target_day = str(target_date.day).zfill(2)
                 
-                # 해당 tr의 모든 td 찾기
-                td_elements = tr_element.find_elements(By.TAG_NAME, "td")
+                print(f"{days_back}일 전 날짜 ({target_date.strftime('%Y-%m-%d')}) 확인 중...")
                 
-                for td in td_elements:
-                    try:
-                        # td 안의 div/p[1] 요소에서 날짜 텍스트 가져와야함. 꽁꽁 숨겨놓음 얘네
-                        day_element = td.find_element(By.XPATH, "./div/p[1]")
-                        day_text = day_element.get_attribute("innerHTML").strip()
-                        
-                        if day_text == yesterday_day + '<br>':  # 사이트 만든놈이 캘린더에 쓸데없이 <br> 쳐 박아놔서 헤맴. 포함시킬것.
-                            print(f"어제 날짜 {yesterday_day} 찾음. 끝내셈")
-                            td.click()
-                            date_found = True
-                            break
-                    except:
+                # 오늘 날짜 td부터 찾기
+                today_td = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "td.current.is-selected.is-today")))
+                
+                # 캘린더에서 target_date 날짜 찾기
+                calendar_tbody = driver.find_element(By.XPATH, '//*[@id="home_calendar_cont"]/div[2]/table/tbody')
+                
+                # tr[1]부터 tr[6]까지 순회하면서 target_date 날짜 찾기
+                date_found = False
+                for tr_num in range(1, 7):
+                    tr_xpath = f'//*[@id="home_calendar_cont"]/div[2]/table/tbody/tr[{tr_num}]'
+                    tr_element = driver.find_element(By.XPATH, tr_xpath)
+                    
+                    # 해당 tr의 모든 td 찾기
+                    td_elements = tr_element.find_elements(By.TAG_NAME, "td")
+                    
+                    for td in td_elements:
+                        try:
+                            # td 안의 div/p[1] 요소에서 날짜 텍스트 가져와야함. 꽁꽁 숨겨놓음 얘네
+                            day_element = td.find_element(By.XPATH, "./div/p[1]")
+                            day_text = day_element.get_attribute("innerHTML").strip()
+                            
+                            if day_text == target_day + '<br>':  # 사이트 만든놈이 캘린더에 쓸데없이 <br> 쳐 박아놔서 헤맴. 포함시킬것.
+                                print(f"날짜 {target_day} 찾음. 클릭 시도...")
+                                td.click()
+                                date_found = True
+                                break
+                        except:
+                            continue
+                    
+                    if date_found:
+                        break
+                
+                if not date_found:
+                    print(f"날짜 {target_day}를 캘린더에서 찾을 수 없습니다.")
+                    days_back += 1
+                    continue
+                
+                # 날짜 클릭 후 잠시 대기
+                time.sleep(2)
+                
+                # "No data available" 메시지가 있는지 확인
+                try:
+                    no_data_element = driver.find_element(By.CSS_SELECTOR, "p.tiS")
+                    no_data_text = no_data_element.text.strip()
+                    
+                    if "No data available" in no_data_text:
+                        print(f"날짜 {target_date.strftime('%Y-%m-%d')}: 데이터 없음. 하루 더 뒤로...")
+                        days_back += 1
                         continue
-                
-                if date_found:
+                    else:
+                        print(f"날짜 {target_date.strftime('%Y-%m-%d')}: 데이터 발견! 크롤링 시작...")
+                        break
+                        
+                except:
+                    # "No data available" 메시지가 없다면 데이터가 있다는 뜻
+                    print(f"날짜 {target_date.strftime('%Y-%m-%d')}: 데이터 발견! 크롤링 시작...")
                     break
-            
-            if not date_found:
-                print(f"어제 날짜 {yesterday_day}를 찾을 수 없습니다.")
-                return
-                
-        except Exception as e:
-            print(f"날짜 선택 중 오류 발생: {e}")
+                    
+            except Exception as e:
+                print(f"날짜 {target_date.strftime('%Y-%m-%d')} 확인 중 오류 발생: {e}")
+                days_back += 1
+                continue
+        
+        if days_back > max_days_back:
+            print(f"최대 {max_days_back}일까지 뒤로 갔지만 데이터를 찾을 수 없습니다.")
             return
         
+        print(f"최종 선택된 날짜: {target_date.strftime('%Y-%m-%d')}")
         time.sleep(2)
 
         ## 이어서 짤 로직 계획 
@@ -140,7 +186,7 @@ def SCFI_Crawling():
                 os.makedirs('DATA')
 
             # 어제 날짜를 YYMMDD 형식으로 변환할거임.
-            yesterday_str = yesterday.strftime('%y%m%d')
+            yesterday_str = target_date.strftime('%y%m%d') # 최종 선택된 날짜를 사용
             filename = f'DAILY_SCFI_{yesterday_str}.xlsx'
             filepath = os.path.join('DATA', filename)
 
@@ -158,4 +204,4 @@ def SCFI_Crawling():
         driver.quit()
 
 if __name__ == '__main__':
-    SCFI_Crawling()
+    Daily_SCFI_Crawling()
