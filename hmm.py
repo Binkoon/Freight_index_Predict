@@ -30,9 +30,16 @@ def hmm_schedule_crawling():
     chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     
     # 다운로드 경로 설정
-    download_path = os.path.join(os.getcwd(), "HMM_DATA")
+    base_download_path = os.path.join(os.getcwd(), "HMM_DATA")
+    if not os.path.exists(base_download_path):
+        os.makedirs(base_download_path)
+    
+    # 오늘 날짜로 하위 폴더 생성
+    today = datetime.now().strftime("%y%m%d")
+    download_path = os.path.join(base_download_path, today)
     if not os.path.exists(download_path):
         os.makedirs(download_path)
+        print(f"날짜 폴더 생성 완료: {download_path}")
     
     chrome_options.add_experimental_option("prefs", {
         "download.default_directory": download_path,
@@ -148,12 +155,33 @@ def hmm_schedule_crawling():
                     continue
                 
                 ## 4. To Port 클리어 및 설정
-                to_port = wait.until(EC.element_to_be_clickable((By.ID, "srchPointTo")))
-                to_port.click()
-                to_port.clear()
-                to_port.send_keys(to_port_name)
-                print(f"To Port에 {to_port_name} 입력 완료")
-                time.sleep(3)
+                try:
+                    # To Port 필드가 클릭 가능한 상태가 될 때까지 대기
+                    to_port = wait.until(EC.element_to_be_clickable((By.ID, "srchPointTo")))
+                    
+                    # JavaScript로 클릭 시도 (더 안전함)
+                    try:
+                        driver.execute_script("arguments[0].click();", to_port)
+                        print("JavaScript로 To Port 클릭 완료")
+                    except:
+                        # JavaScript 실패 시 일반 클릭 시도
+                        to_port.click()
+                        print("일반 클릭으로 To Port 클릭 완료")
+                    
+                    to_port.clear()
+                    to_port.send_keys(to_port_name)
+                    print(f"To Port에 {to_port_name} 입력 완료")
+                    time.sleep(3)
+                except Exception as e:
+                    print(f"To Port 입력 실패: {e}")
+                    # 추가 대기 후 재시도
+                    time.sleep(3)
+                    to_port = wait.until(EC.element_to_be_clickable((By.ID, "srchPointTo")))
+                    driver.execute_script("arguments[0].click();", to_port)
+                    to_port.clear()
+                    to_port.send_keys(to_port_name)
+                    print(f"To Port 재시도로 {to_port_name} 입력 완료")
+                    time.sleep(3)
                 
                 # 자동완성 리스트에서 첫 번째 항목 선택
                 try:
@@ -172,7 +200,36 @@ def hmm_schedule_crawling():
                     print(f"{to_port_name} 자동완성 선택 실패: {e}")
                     continue
                 
-                ## 5. 검색 버튼 클릭
+                ## 5. PORT KLANG 모달 팝업 처리 (있는 경우)
+                try:
+                    # 모달 팝업이 있는지 확인
+                    modal_element = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id='popup_facility_guide_list']/div[2]/div/div/div/table/tbody/tr[1]/td[2]/div/div/div/div/div/div/label/span[1]")))
+                    if modal_element:
+                        print("PORT KLANG 모달 팝업 감지, 처리 중...")
+                        # 모달 팝업 요소 클릭
+                        modal_element.click()
+                        time.sleep(2)
+                        
+                        # Apply 버튼 클릭
+                        apply_button = wait.until(EC.element_to_be_clickable((By.ID, "btnApply")))
+                        apply_button.click()
+                        print("모달 팝업 Apply 버튼 클릭 완료")
+                        time.sleep(3)
+                        
+                        # 모달 팝업이 완전히 사라질 때까지 대기
+                        try:
+                            wait.until(EC.invisibility_of_element_located((By.ID, "popup_facility_guide_list")))
+                            print("모달 팝업 완전히 닫힘 확인")
+                        except:
+                            print("모달 팝업 닫힘 확인 실패, 추가 대기")
+                            time.sleep(2)
+                except Exception as e:
+                    print("모달 팝업이 없거나 처리 실패, 계속 진행: {e}")
+                
+                # 팝업이나 모달이 완전히 사라질 때까지 추가 대기
+                time.sleep(2)
+                
+                ## 6. 검색 버튼 클릭
                 search_button = wait.until(EC.element_to_be_clickable((By.ID, "btnRetrieve")))
                 search_button.click()
                 print("검색 버튼 클릭 완료")
@@ -252,9 +309,8 @@ def collect_and_save_data(from_port, to_port, wait, download_path):
         # 데이터프레임 생성
         df = pd.DataFrame(table_data, columns=headers)
         
-        # 오늘 날짜로 파일명 생성 (from_to_오늘날짜 형식)
-        today = datetime.now().strftime("%y%m%d")
-        filename = f"{from_port}_{to_port}_{today}.xlsx"
+        # 파일명 생성 (from_to 형식, 날짜는 폴더에 포함됨)
+        filename = f"{from_port}_{to_port}.xlsx"
         filepath = os.path.join(download_path, filename)
         
         # 엑셀 파일로 저장
