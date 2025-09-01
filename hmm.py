@@ -22,6 +22,9 @@ def hmm_schedule_crawling():
     # 19개 포트 리스트 (완전한 순회 항로 - 18개 조합 생성)
     ports = ["QINGDAO", "BUSAN", "SHANGHAI", "NINGBO", "KAOHSIUNG", "CHIWAN", "SINGAPORE", "JEBEL ALI", "DAMMAM", "JUBAIL", "HAMAD", "ABU DHABI", "JEBEL ALI", "SOHAR", "PORT KLANG", "SINGAPORE", "HONG KONG", "QINGDAO"]
     
+    # 다운로드 순서 추적을 위한 카운터
+    download_counter = 1
+    
     # Chrome 옵션 설정 (봇 감지 방지)
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
@@ -115,7 +118,8 @@ def hmm_schedule_crawling():
             time.sleep(5)
             
             # 첫 번째 조합 데이터 수집 및 저장
-            collect_and_save_data("QINGDAO", "BUSAN", wait, download_path)
+            collect_and_save_data("QINGDAO", "BUSAN", wait, download_path, download_counter)
+            download_counter += 1
             
         except Exception as e:
             print(f"첫 번째 조합 처리 실패: {e}")
@@ -236,7 +240,8 @@ def hmm_schedule_crawling():
                 time.sleep(5)
                 
                 # 데이터 수집 및 저장
-                collect_and_save_data(from_port_name, to_port_name, wait, download_path)
+                collect_and_save_data(from_port_name, to_port_name, wait, download_path, download_counter)
+                download_counter += 1
                 
             except Exception as e:
                 print(f"{from_port_name} → {to_port_name} 조합 처리 실패: {e}")
@@ -249,7 +254,7 @@ def hmm_schedule_crawling():
     finally:
         driver.quit()
 
-def collect_and_save_data(from_port, to_port, wait, download_path):
+def collect_and_save_data(from_port, to_port, wait, download_path, counter):
     """데이터 수집 및 엑셀 저장 함수"""
     
     ## 7. 테이블 헤더 수집
@@ -309,8 +314,8 @@ def collect_and_save_data(from_port, to_port, wait, download_path):
         # 데이터프레임 생성
         df = pd.DataFrame(table_data, columns=headers)
         
-        # 파일명 생성 (from_to 형식, 날짜는 폴더에 포함됨)
-        filename = f"{from_port}_{to_port}.xlsx"
+        # 파일명 생성 (숫자 접두사 + from_to 형식, 날짜는 폴더에 포함됨)
+        filename = f"{counter:02d}_{from_port}_{to_port}.xlsx"
         filepath = os.path.join(download_path, filename)
         
         # 엑셀 파일로 저장

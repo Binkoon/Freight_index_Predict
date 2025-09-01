@@ -117,7 +117,7 @@ def maersk_schedule_crawling():
                     time.sleep(3)
                 except Exception as e:
                     print("쿠키 팝업 없음")
-                
+                # //*[@id="mi-tray-arrow-down"]
                 # 3단계: 다운로드 버튼 클릭 (JavaScript만)
                 print("2. 다운로드 버튼 클릭 중...")
                 
@@ -125,23 +125,29 @@ def maersk_schedule_crawling():
                 time.sleep(5)
                 
                 try:
-                    # mc-button[2] 요소를 먼저 찾고, JavaScript로 내부 button 찾기
-                    mc_button = driver.find_element(By.XPATH, '//*[@id="schedules_app"]/main/div/div[2]/div[1]/div[2]/mc-button[2]')
+                    # 올바른 XPath로 다운로드 버튼 찾기
+                    download_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="mi-tray-arrow-down"]')))
                     
-                    # JavaScript로 mc-button 내부의 Shadow DOM에서 button 찾기
-                    download_button = driver.execute_script("""
-                        var mcButton = arguments[0];
-                        var shadowRoot = mcButton.shadowRoot;
-                        var button = shadowRoot.querySelector('button[aria-label="다운로드"]');
-                        return button;
-                    """, mc_button)
+                    # 요소가 화면에 보이도록 스크롤
+                    driver.execute_script("arguments[0].scrollIntoView(true);", download_button)
+                    time.sleep(2)
                     
-                    if download_button:
-                        driver.execute_script("arguments[0].click();", download_button)
-                        print("✅ 다운로드 시작!")
-                    else:
-                        print("❌ 다운로드 button을 찾을 수 없음")
-                        continue
+                    # 여러 클릭 방법 시도
+                    try:
+                        # 1. 일반 클릭 시도
+                        download_button.click()
+                        print("✅ 일반 클릭으로 다운로드 시작!")
+                    except:
+                        try:
+                            # 2. JavaScript 클릭 시도
+                            driver.execute_script("arguments[0].click();", download_button)
+                            print("✅ JavaScript 클릭으로 다운로드 시작!")
+                        except:
+                            # 3. ActionChains 클릭 시도
+                            from selenium.webdriver.common.action_chains import ActionChains
+                            actions = ActionChains(driver)
+                            actions.move_to_element(download_button).click().perform()
+                            print("✅ ActionChains 클릭으로 다운로드 시작!")
                         
                 except Exception as e:
                     print(f"❌ 다운로드 버튼 클릭 실패: {e}")
