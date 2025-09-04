@@ -20,7 +20,7 @@ def hmm_schedule_crawling():
     """HMM 스케줄 데이터 수집 (Point to Point 방식 - 모든 포트 조합)"""
     
     # 19개 포트 리스트 (완전한 순회 항로 - 18개 조합 생성)
-    ports = ["QINGDAO", "BUSAN", "SHANGHAI", "NINGBO", "KAOHSIUNG", "CHIWAN", "SINGAPORE", "JEBEL ALI", "DAMMAM", "JUBAIL", "HAMAD", "ABU DHABI", "JEBEL ALI", "SOHAR", "PORT KLANG", "SINGAPORE", "HONG KONG", "QINGDAO"]
+    ports = ["XINGANG", "BUSAN", "SHANGHAI", "NINGBO", "KAOHSIUNG", "CHIWAN", "SINGAPORE", "JEBEL ALI", "DAMMAM", "JUBAIL", "HAMAD", "ABU DHABI", "JEBEL ALI", "SOHAR", "PORT KLANG", "SINGAPORE", "HONG KONG", "Xingang"]
     
     # 다운로드 순서 추적을 위한 카운터
     download_counter = 1
