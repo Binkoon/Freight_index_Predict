@@ -28,10 +28,28 @@ def maersk_schedule_crawling():
     chrome_options.add_argument("--start-maximized") # 무조건 최대사이즈로 박음
     chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
     
-    # 다운로드 경로 설정
-    download_path = os.path.join(os.getcwd(), 'MASERSK_DATA')
-    if not os.path.exists(download_path):
-        os.makedirs(download_path)
+    # 다운로드 경로 설정 (middleEast/westIndia 폴더 구조)
+    base_download_path = os.path.join(os.getcwd(), 'MASERSK_DATA')
+    if not os.path.exists(base_download_path):
+        os.makedirs(base_download_path)
+    
+    # 오늘 날짜로 하위 폴더 생성
+    today = datetime.now().strftime("%y%m%d")
+    
+    # middleEast 폴더 생성
+    middle_east_path = os.path.join(base_download_path, "middleEast", today)
+    if not os.path.exists(middle_east_path):
+        os.makedirs(middle_east_path)
+        print(f"중동 서비스 폴더 생성 완료: {middle_east_path}")
+    
+    # westIndia 폴더 생성
+    west_india_path = os.path.join(base_download_path, "westIndia", today)
+    if not os.path.exists(west_india_path):
+        os.makedirs(west_india_path)
+        print(f"서인도 서비스 폴더 생성 완료: {west_india_path}")
+    
+    # 현재는 middleEast 사용 (향후 서비스별로 분류 가능)
+    download_path = middle_east_path
     
     chrome_options.add_experimental_option("prefs", {
         "download.default_directory": download_path,

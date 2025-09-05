@@ -63,24 +63,44 @@ def rename_downloaded_file(download_path, new_filename, download_start_time):
 def cosco_schedule_crawling():
     """COSCO 스케줄 데이터 수집 (MEX4, MEX5, MEX 서비스)"""
     
-    # 서비스별 설정
-    services = [
-        {"name": "MEX4", "xpath": "/html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[6]/div[2]/div/ul/li[2]", "port": "Qingdao"},
-        {"name": "MEX5", "xpath": "/html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[6]/div[2]/div/ul/li[3]", "port": "Jebel Ali"},
-        {"name": "MEX", "xpath": "/html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[6]/div[2]/div/ul/li[4]", "port": "Qingdao"}
+    # 서비스별 설정 (중동 서비스)
+    middle_east_services = [
+        {"name": "MEX4", "xpath": "/html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[6]/div[2]/div/ul/li[2]", "port": "Qingdao", "route_type": "middleEast"},
+        {"name": "MEX5", "xpath": "/html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[6]/div[2]/div/ul/li[3]", "port": "Jebel Ali", "route_type": "middleEast"},
+        {"name": "MEX", "xpath": "/html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[6]/div[2]/div/ul/li[4]", "port": "Qingdao", "route_type": "middleEast"}
     ]
     
-    # 다운로드 경로 설정
+    # 서인도 서비스 (CI1, CI2 - xpath 값은 나중에 추가 예정)
+    west_india_services = [
+        # {"name": "CI1", "xpath": "CI1_xpath_값_필요", "port": "포트명", "route_type": "westIndia"},
+        # {"name": "CI2", "xpath": "CI2_xpath_값_필요", "port": "포트명", "route_type": "westIndia"}
+    ]
+    
+    # 모든 서비스 통합
+    all_services = middle_east_services + west_india_services
+    
+    # 다운로드 경로 설정 (middleEast/westIndia 폴더 구조)
     base_download_path = os.path.join(os.getcwd(), "COSCO_DATA")
     if not os.path.exists(base_download_path):
         os.makedirs(base_download_path)
     
     # 오늘 날짜로 하위 폴더 생성
     today = datetime.now().strftime("%y%m%d")
-    download_path = os.path.join(base_download_path, today)
-    if not os.path.exists(download_path):
-        os.makedirs(download_path)
-        print(f"날짜 폴더 생성 완료: {download_path}")
+    
+    # middleEast 폴더 생성 (MEX 서비스용)
+    middle_east_path = os.path.join(base_download_path, "middleEast", today)
+    if not os.path.exists(middle_east_path):
+        os.makedirs(middle_east_path)
+        print(f"중동 서비스 폴더 생성 완료: {middle_east_path}")
+    
+    # westIndia 폴더 생성 (향후 서인도 서비스용)
+    west_india_path = os.path.join(base_download_path, "westIndia", today)
+    if not os.path.exists(west_india_path):
+        os.makedirs(west_india_path)
+        print(f"서인도 서비스 폴더 생성 완료: {west_india_path}")
+    
+    # 현재는 middleEast 사용
+    download_path = middle_east_path
     
     # Chrome 옵션 설정 (봇 감지 방지)
     chrome_options = webdriver.ChromeOptions()
@@ -139,7 +159,7 @@ def cosco_schedule_crawling():
             return
         
         # 서비스별 반복 처리
-        for i, service in enumerate(services):
+        for i, service in enumerate(all_services):
             print(f"\n=== {service['name']} 서비스 처리 시작 ===")
             
             if i > 0:  # 첫 번째 서비스가 아닌 경우 뒤로가기 2번
@@ -242,9 +262,15 @@ def cosco_schedule_crawling():
                 print("다운로드 버튼 클릭 완료")
                 time.sleep(3)  # 다운로드 시작 대기
                 
+                # route_type에 따라 적절한 다운로드 경로 설정
+                if service['route_type'] == 'middleEast':
+                    current_download_path = middle_east_path
+                else:  # westIndia
+                    current_download_path = west_india_path
+                
                 # 다운로드된 파일 찾기 및 이름 변경
                 print("다운로드된 파일 이름 변경 중...")
-                rename_downloaded_file(download_path, f"cosco_{service['name']}", download_start_time)
+                rename_downloaded_file(current_download_path, f"cosco_{service['name']}", download_start_time)
                 
                 print(f"{service['name']} 스케줄 다운로드 완료!")
                 

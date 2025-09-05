@@ -15,7 +15,7 @@ from datetime import datetime
 import pandas as pd
 import re
 
-def click_toggle_buttons(driver, wait):
+def click_toggle_buttons(driver, wait, service_name, route_type):
     """
     토글 버튼들을 찾아서 클릭하는 함수
     """
@@ -72,7 +72,7 @@ def click_toggle_buttons(driver, wait):
     # 엑셀 파일 생성
     if all_schedule_data:
         print("엑셀 파일 생성 중...")
-        create_excel_file(all_schedule_data)
+        create_excel_file(all_schedule_data, service_name, route_type)
     
     return all_schedule_data
 
@@ -226,7 +226,7 @@ def format_date_time(date_time_str):
         print(f"날짜 형식 변환 실패: {e}")
         return date_time_str
 
-def create_excel_file(schedule_data_list):
+def create_excel_file(schedule_data_list, service_name, route_type):
     """
     수집한 스케줄 데이터를 엑셀 파일로 저장하는 함수
     """
@@ -235,11 +235,12 @@ def create_excel_file(schedule_data_list):
         today = datetime.now()
         date_folder = today.strftime("%y%m%d")
         
-        # MSC_DATA 폴더 경로
+        # MSC_DATA 폴더 경로 (route_type에 따라 분류)
         msc_data_path = "MSC_DATA"
+        route_folder_path = os.path.join(msc_data_path, route_type)
         
         # 날짜 폴더 경로
-        date_folder_path = os.path.join(msc_data_path, date_folder)
+        date_folder_path = os.path.join(route_folder_path, date_folder)
         
         # 날짜 폴더가 없으면 생성
         if not os.path.exists(date_folder_path):
@@ -268,8 +269,8 @@ def create_excel_file(schedule_data_list):
         # DataFrame 생성
         df = pd.DataFrame(excel_data)
         
-        # 엑셀 파일명 생성 (FALCON 서비스 구분)
-        excel_filename = f"MSC_Schedule_FALCON_{date_folder}.xlsx"
+        # 엑셀 파일명 생성 (서비스 구분)
+        excel_filename = f"MSC_Schedule_{service_name}_{date_folder}.xlsx"
         excel_filepath = os.path.join(date_folder_path, excel_filename)
         
         # 엑셀 파일 저장
@@ -284,9 +285,9 @@ def create_excel_file(schedule_data_list):
         print(f"엑셀 파일 생성 실패: {e}")
         return None
 
-def msc_search():
+def msc_search_single(from_port, to_port, service_name, route_type):
     """
-    MSC 웹사이트에서 출발지(ningbo)와 도착지(jebel ali) 검색
+    MSC 웹사이트에서 특정 출발지와 도착지 검색
     """
     # Chrome 옵션 설정
     chrome_options = Options()
@@ -336,11 +337,11 @@ def msc_search():
         except:
             print("쿠키 허용 버튼이 없거나 이미 처리됨")
         
-        # 출발지 입력 (ningbo)
-        print("출발지 입력 중...")
+        # 출발지 입력
+        print(f"출발지 입력 중: {from_port}")
         from_input = wait.until(EC.presence_of_element_located((By.ID, "from")))
         from_input.clear()
-        from_input.send_keys("ningbo")
+        from_input.send_keys(from_port)
         
         # 자동완성 리스트 대기 및 선택
         time.sleep(2)  # 자동완성 리스트 로딩 대기
@@ -349,11 +350,11 @@ def msc_search():
         
         print("출발지 선택 완료")
         
-        # 도착지 입력 (jebel ali)
-        print("도착지 입력 중...")
+        # 도착지 입력
+        print(f"도착지 입력 중: {to_port}")
         to_input = wait.until(EC.presence_of_element_located((By.ID, "to")))
         to_input.clear()
-        to_input.send_keys("jebel ali")
+        to_input.send_keys(to_port)
         
         # 자동완성 리스트 대기 및 선택
         time.sleep(2)  # 자동완성 리스트 로딩 대기
@@ -374,7 +375,7 @@ def msc_search():
         
         # 토글 버튼들 클릭
         print("토글 버튼들 클릭 중...")
-        schedule_data_list = click_toggle_buttons(driver, wait)
+        schedule_data_list = click_toggle_buttons(driver, wait, service_name, route_type)
         
         # 현재 URL 확인
         current_url = driver.current_url
@@ -387,9 +388,34 @@ def msc_search():
         driver.quit()
         return None
 
+def msc_search():
+    """
+    MSC 웹사이트에서 3개의 서로 다른 경로 검색
+    """
+    # 검색할 경로들 정의 (서비스별로 분류)
+    search_routes = [
+        {"from": "ningbo", "to": "jebel ali", "service": "FALCON", "route_type": "middleEast"},
+        {"from": "ningbo", "to": "mundra", "service": "Shikra", "route_type": "westIndia"},
+        {"from": "ningbo", "to": "nhav", "service": "Clanga", "route_type": "westIndia"}
+    ]
+    
+    for i, route in enumerate(search_routes, 1):
+        print(f"\n=== {i}/3 경로 검색 시작: {route['from']} → {route['to']} ({route['service']}) ===")
+        
+        driver = msc_search_single(route['from'], route['to'], route['service'], route['route_type'])
+        if driver:
+            print(f"{route['service']} 서비스 검색 완료!")
+            driver.quit()
+        else:
+            print(f"{route['service']} 서비스 검색 실패!")
+        
+        # 마지막 경로가 아니면 잠시 대기
+        if i < len(search_routes):
+            print("다음 경로 검색을 위해 3초 대기...")
+            time.sleep(3)
+    
+    print("\n모든 MSC 서비스 검색이 완료되었습니다!")
+
 if __name__ == "__main__":
-    driver = msc_search()
-    if driver:
-        print("모든 작업이 완료되었습니다. 브라우저를 닫습니다...")
-        driver.quit()
+    msc_search()
 
