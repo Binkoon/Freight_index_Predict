@@ -30,12 +30,14 @@ def hmm_schedule_crawling():
     middle_east_ports = ["XINGANG", "BUSAN", "SHANGHAI", "NINGBO", "KAOHSIUNG", "CHIWAN", "SINGAPORE", "JEBEL ALI", "DAMMAM", "JUBAIL", "HAMAD", "ABU DHABI", "JEBEL ALI", "SOHAR", "PORT KLANG", "SINGAPORE", "HONG KONG", "Xingang"]
     
     # 서인도 서비스 항로 포트 리스트
-    west_india_ports = ["Busan", "Gwangyang", "SHANGHAI", "NINGBO", "Shekou", "Kaohsiung", "Singapore", "PORT KLANG", "Nhava Sheva", "Hazira", "Mundra", "Karachi", "PORT KLANG", "Singapore", "Da chan Bay", "Kaohsiung", "Busan"]
+    west_india_ports_FIM = ["Busan", "Gwangyang", "SHANGHAI", "NINGBO", "Shekou", "Kaohsiung", "Singapore", "PORT KLANG", "Nhava Sheva", "Hazira", "Mundra", "Karachi", "PORT KLANG", "Singapore", "Da chan Bay", "Kaohsiung", "Busan"]
     
+    west_india_ports_PS3 = ["Busan", "Shanghai", "Ningbo", "Shekou", "Singapore", "Port Kelang", "Nhava Sheva", "Pipavav", "Colombo", "Port Kelang", "Singapore", "Cai Mep", "Haiphong"]
     # 두 항로 모두 처리
     route_configs = [
         {"ports": middle_east_ports, "folder": "middleEast", "name": "중동서비스"},
-        {"ports": west_india_ports, "folder": "westIndia", "name": "서인도서비스"}
+        {"ports": west_india_ports_FIM, "folder": "westIndia", "name": "서인도서비스"},
+        {"ports": west_india_ports_PS3, "folder": "westIndia", "name": "서인도서비스"}
     ]
     
     # Chrome 옵션 설정 (봇 감지 방지)

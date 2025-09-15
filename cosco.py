@@ -1,5 +1,5 @@
 """
-코스코 쪽 준비
+코스코 쪽 준비 (middelEast)
 1. 접속 : https://elines.coscoshipping.com/ebusiness/sailingSchedule/searchByCity
 2. 탭 선택 (Schedule by Service) : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/ul/span[2]/li
 3. Asian Pacific Service 탭 선택 : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[1]/div[5]
@@ -7,6 +7,18 @@
 5. MEX4 선택 : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[6]/div[2]/div/ul/li[2]
 6. Ports name input 클릭 활성화 : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div[1]/div[2]/div/form/div/div[1]/div/div/div/div[1]/input
 7. Qingdao 입력하고 자동완성 리스트 선택 
+8. Search 버튼 클릭 : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div[1]/div[2]/div/form/div/div[2]/button
+"""
+
+"""
+코스코 쪽 준비 (westIndia)
+1. 접속 : https://elines.coscoshipping.com/ebusiness/sailingSchedule/searchByCity
+2. 탭 선택 (Schedule by Service) : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/ul/span[2]/li
+3. SouthEast & South Asia Service 탭 선택 : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[1]/div[8]
+4. Middel East 탭 선택 : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[2]
+5. CI1 선택 : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div[2]/div/ul/li[2]
+6. Ports name input 클릭 활성화 : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div[1]/div[2]/div/form/div/div[1]/div/div/div/div[1]/input
+7. Ningbo 입력하고 자동완성 리스트 선택 
 8. Search 버튼 클릭 : /html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div[1]/div[2]/div/form/div/div[2]/button
 """
 
@@ -70,10 +82,9 @@ def cosco_schedule_crawling():
         {"name": "MEX", "xpath": "/html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[6]/div[2]/div/ul/li[4]", "port": "Qingdao", "route_type": "middleEast"}
     ]
     
-    # 서인도 서비스 (CI1, CI2 - xpath 값은 나중에 추가 예정)
+    # 서인도 서비스 (CI1, CI2)
     west_india_services = [
-        # {"name": "CI1", "xpath": "CI1_xpath_값_필요", "port": "포트명", "route_type": "westIndia"},
-        # {"name": "CI2", "xpath": "CI2_xpath_값_필요", "port": "포트명", "route_type": "westIndia"}
+        {"name": "CI1", "xpath": "/html/body/div[1]/div/div[1]/div/div[2]/div[2]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[7]/div[2]/div/ul/li[1]", "port": "Ningbo", "route_type": "westIndia"}
     ]
     
     # 모든 서비스 통합
